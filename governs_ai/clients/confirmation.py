@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2024 GovernsAI. All rights reserved.
 """
 Confirmation client for WebAuthn-based approval workflows.
 """

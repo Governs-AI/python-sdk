@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2024 GovernsAI. All rights reserved.
 """
 Precheck data models for request validation and governance compliance.
 """

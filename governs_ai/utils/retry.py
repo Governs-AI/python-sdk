@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2024 GovernsAI. All rights reserved.
 """
 Retry utilities for the GovernsAI Python SDK.
 """
