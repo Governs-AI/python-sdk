@@ -30,7 +30,8 @@ class BudgetClient:
         try:
             self.logger.debug(f"Getting budget context for user: {user_id}")
             response = await self.http_client.get(
-                f"/budget/{user_id}",
+                "/api/v1/budget/context",
+                params={"userId": user_id},
             )
             return BudgetContext.from_dict(response.data)
         except Exception as e:
@@ -54,13 +55,26 @@ class BudgetClient:
         """
         try:
             self.logger.debug(f"Checking budget for user: {user_id}, cost: {estimated_cost}")
-            response = await self.http_client.post(
-                f"/budget/{user_id}/check",
-                data={
+            response = await self.http_client.get(
+                "/api/v1/budget/status",
+                params={
+                    "userId": user_id,
                     "estimatedCost": estimated_cost,
                 },
             )
-            return BudgetStatus.from_dict(response.data)
+            status_payload = response.data.get("status", response.data)
+            if isinstance(status_payload, dict) and "allowed" in status_payload:
+                return BudgetStatus.from_dict(status_payload)
+
+            # Fallback to local check when endpoint shape differs.
+            context = await self.get_budget_context(user_id)
+            allowed = context.remaining_budget >= estimated_cost
+            return BudgetStatus(
+                allowed=allowed,
+                reason=None if allowed else "Insufficient budget remaining",
+                remaining_budget=context.remaining_budget,
+                estimated_cost=estimated_cost,
+            )
         except Exception as e:
             self.logger.error(f"Check budget failed: {str(e)}")
             raise BudgetError(f"Check budget failed: {str(e)}")
@@ -75,7 +89,7 @@ class BudgetClient:
         try:
             self.logger.debug(f"Recording usage for user: {usage.user_id}")
             response = await self.http_client.post(
-                "/budget/usage",
+                "/api/v1/usage",
                 data=usage.to_dict(),
             )
             if not response.is_success:
@@ -108,12 +122,13 @@ class BudgetClient:
                 params["limit"] = limit
             if offset is not None:
                 params["offset"] = offset
+            params["userId"] = user_id
 
             response = await self.http_client.get(
-                f"/budget/{user_id}/usage",
+                "/api/v1/usage",
                 params=params,
             )
-            return response.data.get("usage", [])
+            return response.data.get("records", response.data.get("usage", []))
         except Exception as e:
             self.logger.error(f"Get usage history failed: {str(e)}")
             raise BudgetError(f"Get usage history failed: {str(e)}")
@@ -137,11 +152,12 @@ class BudgetClient:
         """
         try:
             self.logger.debug(f"Updating budget limit for user: {user_id}")
-            response = await self.http_client.put(
-                f"/budget/{user_id}",
+            response = await self.http_client.request(
+                "PATCH",
+                f"/api/v1/spend/budget-limits/{user_id}",
                 data={
                     "monthlyLimit": monthly_limit,
-                    "currency": currency,
+                    "currency": currency,  # Kept for backward-compatible payloads.
                 },
             )
             return response.is_success

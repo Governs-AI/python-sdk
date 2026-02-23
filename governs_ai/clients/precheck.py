@@ -2,7 +2,7 @@
 Precheck client for request validation and governance compliance.
 """
 
-import json
+import asyncio
 from typing import Dict, Any, List, Optional
 from ..models.precheck import PrecheckRequest, PrecheckResponse
 from ..utils.http import HTTPClient
@@ -30,14 +30,116 @@ class PrecheckClient:
         """
         try:
             self.logger.debug(f"Prechecking request: {request.tool}")
+            enriched_request = await self._enrich_request(request)
             response = await self.http_client.post(
-                "/precheck",
-                data=request.to_dict(),
+                "/api/v1/precheck",
+                data=enriched_request.to_dict(),
             )
             return PrecheckResponse.from_dict(response.data)
         except Exception as e:
             self.logger.error(f"Precheck request failed: {str(e)}")
             raise PrecheckError(f"Precheck request failed: {str(e)}")
+
+    async def _enrich_request(self, request: PrecheckRequest) -> PrecheckRequest:
+        """Enrich request with platform policy/tool/budget context when missing."""
+        needs_policy = request.policy_config is None
+        needs_tool = request.tool_config is None and bool(request.tool)
+        needs_budget = request.budget_context is None
+
+        if not (needs_policy or needs_tool or needs_budget):
+            return request
+
+        enriched: Dict[str, Any] = request.to_dict()
+        tasks = []
+
+        if needs_policy:
+            tasks.append(self._attach_policy_config(enriched))
+        if needs_tool:
+            tasks.append(self._attach_tool_config(enriched, request.tool))
+        if needs_budget:
+            tasks.append(self._attach_budget_context(enriched))
+
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+
+        return PrecheckRequest.from_dict(enriched)
+
+    async def _attach_policy_config(self, enriched: Dict[str, Any]) -> None:
+        """Attach transformed policy config from platform API."""
+        try:
+            response = await self.http_client.get("/api/v1/policies")
+            raw_policy = response.data
+            if isinstance(raw_policy, dict) and isinstance(raw_policy.get("policies"), list):
+                raw_policy = (raw_policy.get("policies") or [None])[0]
+            transformed = self._transform_policy_config(raw_policy)
+            if transformed:
+                enriched["policy_config"] = transformed
+        except Exception:
+            # Best-effort enrichment; precheck request should still proceed.
+            pass
+
+    async def _attach_tool_config(self, enriched: Dict[str, Any], tool: str) -> None:
+        """Attach tool metadata when available."""
+        try:
+            response = await self.http_client.get(f"/api/v1/tools/{tool}/metadata")
+            metadata = response.data.get("metadata") if isinstance(response.data, dict) else None
+            if isinstance(metadata, dict):
+                enriched["tool_config"] = metadata
+        except Exception:
+            pass
+
+    async def _attach_budget_context(self, enriched: Dict[str, Any]) -> None:
+        """Attach current budget context when available."""
+        try:
+            response = await self.http_client.get("/api/v1/budget/context")
+            if isinstance(response.data, dict):
+                enriched["budget_context"] = response.data
+        except Exception:
+            pass
+
+    def _transform_policy_config(self, raw_policy: Any) -> Optional[Dict[str, Any]]:
+        """Transform platform policy shape to precheck request schema."""
+        if not isinstance(raw_policy, dict):
+            return None
+
+        policy: Dict[str, Any] = {}
+        policy["version"] = raw_policy.get("version", "v1")
+
+        if raw_policy.get("model"):
+            policy["model"] = raw_policy.get("model")
+
+        defaults = raw_policy.get("defaults")
+        if isinstance(defaults, dict):
+            policy["defaults"] = {
+                "ingress": defaults.get("ingress", {}),
+                "egress": defaults.get("egress", {}),
+            }
+
+        tool_access = raw_policy.get("tool_access", raw_policy.get("toolAccess"))
+        if isinstance(tool_access, dict):
+            policy["tool_access"] = tool_access
+
+        deny_tools = raw_policy.get("deny_tools", raw_policy.get("denyTools"))
+        if isinstance(deny_tools, list):
+            policy["deny_tools"] = deny_tools
+
+        allow_tools = raw_policy.get("allow_tools", raw_policy.get("allowTools"))
+        if isinstance(allow_tools, list):
+            policy["allow_tools"] = allow_tools
+
+        network_scopes = raw_policy.get("network_scopes", raw_policy.get("networkScopes"))
+        if isinstance(network_scopes, list):
+            policy["network_scopes"] = network_scopes
+
+        network_tools = raw_policy.get("network_tools", raw_policy.get("networkTools"))
+        if isinstance(network_tools, list):
+            policy["network_tools"] = network_tools
+
+        on_error = raw_policy.get("on_error", raw_policy.get("onError"))
+        if isinstance(on_error, str):
+            policy["on_error"] = on_error
+
+        return policy
 
     async def check_tool_call(
         self,

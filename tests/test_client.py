@@ -27,18 +27,17 @@ class TestGovernsAIClient:
         """Create a test client."""
         config = GovernsAIConfig(
             api_key="test-key",
-            org_id="test-org"
+            org_id="test-org",
+            http_client=mock_http_client,
         )
-        client = GovernsAIClient(config=config)
-        client.http_client = mock_http_client
-        return client
+        return GovernsAIClient(config=config)
 
     @pytest.mark.asyncio
     async def test_test_connection_success(self, client, mock_http_client):
         """Test successful connection test."""
         result = await client.test_connection()
         assert result is True
-        mock_http_client.get.assert_called_once_with("/health")
+        mock_http_client.get.assert_called_once_with("/api/v1/health")
 
     @pytest.mark.asyncio
     async def test_test_connection_failure(self, client, mock_http_client):

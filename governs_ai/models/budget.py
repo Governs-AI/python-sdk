@@ -21,12 +21,12 @@ class BudgetContext:
     def from_dict(cls, data: Dict[str, Any]) -> "BudgetContext":
         """Create from dictionary."""
         return cls(
-            monthly_limit=data["monthlyLimit"],
-            current_spend=data["currentSpend"],
-            remaining_budget=data["remainingBudget"],
+            monthly_limit=data.get("monthly_limit", data.get("monthlyLimit")),
+            current_spend=data.get("current_spend", data.get("currentSpend")),
+            remaining_budget=data.get("remaining_budget", data.get("remainingBudget")),
             currency=data.get("currency", "USD"),
-            period_start=data.get("periodStart"),
-            period_end=data.get("periodEnd"),
+            period_start=data.get("period_start", data.get("periodStart")),
+            period_end=data.get("period_end", data.get("periodEnd")),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -55,8 +55,8 @@ class BudgetStatus:
         return cls(
             allowed=data["allowed"],
             reason=data.get("reason"),
-            remaining_budget=data.get("remainingBudget"),
-            estimated_cost=data.get("estimatedCost"),
+            remaining_budget=data.get("remaining_budget", data.get("remainingBudget")),
+            estimated_cost=data.get("estimated_cost", data.get("estimatedCost")),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -91,14 +91,14 @@ class UsageRecord:
     def from_dict(cls, data: Dict[str, Any]) -> "UsageRecord":
         """Create from dictionary."""
         return cls(
-            user_id=data["userId"],
-            org_id=data["orgId"],
+            user_id=data.get("user_id", data.get("userId")),
+            org_id=data.get("org_id", data.get("orgId")),
             provider=data["provider"],
             model=data["model"],
-            input_tokens=data["inputTokens"],
-            output_tokens=data["outputTokens"],
+            input_tokens=data.get("input_tokens", data.get("inputTokens")),
+            output_tokens=data.get("output_tokens", data.get("outputTokens")),
             cost=data["cost"],
-            cost_type=data["costType"],
+            cost_type=data.get("cost_type", data.get("costType")),
             timestamp=data.get("timestamp"),
         )
 

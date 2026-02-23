@@ -48,8 +48,8 @@ class TestPrecheckRequest:
         data = request.to_dict()
         assert data["tool"] == "model.chat"
         assert data["scope"] == "net.external"
-        assert data["rawText"] == "Hello"
-        assert data["userId"] == "user-123"
+        assert data["raw_text"] == "Hello"
+        assert data["user_id"] == "user-123"
 
     def test_from_dict(self):
         """Test PrecheckRequest from_dict."""
@@ -92,6 +92,15 @@ class TestPrecheckResponse:
         )
 
         assert response.decision == Decision.ALLOW
+
+    def test_legacy_block_decision_normalized(self):
+        """Test legacy block decision is normalized to deny."""
+        response = PrecheckResponse(
+            decision="block",
+            reasons=["legacy response"],
+        )
+
+        assert response.decision == Decision.DENY
 
     def test_from_dict(self):
         """Test PrecheckResponse from_dict."""

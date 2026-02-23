@@ -467,7 +467,7 @@ class PrecheckRequest:
 ```python
 @dataclass
 class PrecheckResponse:
-    decision: Decision  # "allow" | "deny" | "block" | "confirm" | "redact"
+    decision: Decision  # "allow" | "deny" | "confirm" | "redact" (legacy "block" maps to "deny")
     reasons: List[str]
     metadata: Optional[Dict[str, Any]] = None
     requires_confirmation: bool = False

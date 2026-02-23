@@ -141,7 +141,7 @@ class GovernsAIClient:
             True if connection is successful, False otherwise
         """
         try:
-            response = await self.http_client.get("/health")
+            response = await self.http_client.get("/api/v1/health")
             return response.is_success
         except Exception as e:
             self.logger.error(f"Connection test failed: {str(e)}")
@@ -246,7 +246,7 @@ class GovernsAIClient:
         Returns:
             HealthStatus with service health information
         """
-        response = await self.http_client.get("/health")
+        response = await self.http_client.get("/api/v1/health")
         return HealthStatus.from_dict(response.data)
 
     def update_config(self, new_config: Dict[str, Any]) -> None:

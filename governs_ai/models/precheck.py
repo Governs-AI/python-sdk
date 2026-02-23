@@ -11,7 +11,8 @@ class Decision(Enum):
     """Decision types for precheck responses."""
     ALLOW = "allow"
     DENY = "deny"
-    BLOCK = "block"
+    # Backward-compatible alias; canonical blocking decision is "deny".
+    BLOCK = "deny"
     CONFIRM = "confirm"
     REDACT = "redact"
 
@@ -26,18 +27,25 @@ class PrecheckRequest:
     tags: List[str]
     corr_id: Optional[str] = None
     user_id: Optional[str] = None
+    policy_config: Optional[Dict[str, Any]] = None
+    tool_config: Optional[Dict[str, Any]] = None
+    budget_context: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API requests."""
-        return {
+        payload: Dict[str, Any] = {
             "tool": self.tool,
             "scope": self.scope,
-            "rawText": self.raw_text,
+            "raw_text": self.raw_text,
             "payload": self.payload,
             "tags": self.tags,
-            "corrId": self.corr_id,
-            "userId": self.user_id,
+            "corr_id": self.corr_id,
+            "user_id": self.user_id,
+            "policy_config": self.policy_config,
+            "tool_config": self.tool_config,
+            "budget_context": self.budget_context,
         }
+        return {key: value for key, value in payload.items() if value is not None}
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PrecheckRequest":
@@ -45,11 +53,14 @@ class PrecheckRequest:
         return cls(
             tool=data["tool"],
             scope=data["scope"],
-            raw_text=data["rawText"],
-            payload=data["payload"],
-            tags=data["tags"],
-            corr_id=data.get("corrId"),
-            user_id=data.get("userId"),
+            raw_text=data.get("raw_text", data.get("rawText", "")),
+            payload=data.get("payload", {}),
+            tags=data.get("tags", []),
+            corr_id=data.get("corr_id", data.get("corrId")),
+            user_id=data.get("user_id", data.get("userId")),
+            policy_config=data.get("policy_config", data.get("policyConfig")),
+            tool_config=data.get("tool_config", data.get("toolConfig")),
+            budget_context=data.get("budget_context", data.get("budgetContext")),
         )
 
 
@@ -65,6 +76,8 @@ class PrecheckResponse:
     def __post_init__(self):
         """Convert string decision to Decision enum if needed."""
         if isinstance(self.decision, str):
+            if self.decision == "block":
+                self.decision = "deny"
             try:
                 self.decision = Decision(self.decision)
             except ValueError:

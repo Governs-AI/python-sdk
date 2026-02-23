@@ -72,7 +72,7 @@ class HTTPClient:
     def _get_headers(self, additional_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
         """Get default headers for requests."""
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "X-Governs-Key": self.api_key,
             "Content-Type": "application/json",
             "User-Agent": "governs-ai-python-sdk/1.0.0",
         }

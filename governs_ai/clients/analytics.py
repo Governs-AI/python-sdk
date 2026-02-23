@@ -2,6 +2,7 @@
 Analytics client for dashboard data and usage insights.
 """
 
+import asyncio
 from typing import Dict, Any, List, Optional
 from ..models.analytics import (
     DecisionAnalytics,
@@ -57,7 +58,7 @@ class AnalyticsClient:
                 params["offset"] = offset
 
             response = await self.http_client.get(
-                "/analytics/decisions",
+                "/api/v1/decisions",
                 params=params,
             )
             return DecisionAnalytics.from_dict(response.data)
@@ -104,7 +105,7 @@ class AnalyticsClient:
                 params["offset"] = offset
 
             response = await self.http_client.get(
-                "/analytics/tool-calls",
+                "/api/v1/toolcalls",
                 params=params,
             )
             return ToolCallAnalytics.from_dict(response.data)
@@ -142,10 +143,10 @@ class AnalyticsClient:
                 params["costType"] = cost_type
 
             response = await self.http_client.get(
-                "/analytics/spend",
+                "/api/v1/spend",
                 params=params,
             )
-            return SpendAnalytics.from_dict(response.data)
+            return SpendAnalytics.from_dict(response.data.get("spend", response.data))
         except Exception as e:
             self.logger.error(f"Get spend analytics failed: {str(e)}")
             raise AnalyticsError(f"Get spend analytics failed: {str(e)}")
@@ -188,12 +189,12 @@ class AnalyticsClient:
                 params["offset"] = offset
 
             response = await self.http_client.get(
-                "/analytics/usage",
+                "/api/v1/usage",
                 params=params,
             )
             return [
                 AnalyticsUsageRecord.from_dict(record)
-                for record in response.data.get("usage", [])
+                for record in response.data.get("records", response.data.get("usage", []))
             ]
         except Exception as e:
             self.logger.error(f"Get usage records failed: {str(e)}")
@@ -216,15 +217,42 @@ class AnalyticsClient:
         """
         try:
             self.logger.debug(f"Getting dashboard summary: {time_range}")
-            params = {"timeRange": time_range}
-            if user_id:
-                params["userId"] = user_id
-
-            response = await self.http_client.get(
-                "/analytics/dashboard",
-                params=params,
+            decisions_task = self.get_decisions(
+                time_range=time_range,
+                include_stats=True,
+                user_id=user_id,
+                limit=100,
+                offset=0,
             )
-            return response.data
+            tool_calls_task = self.get_tool_calls(
+                time_range=time_range,
+                include_stats=True,
+                user_id=user_id,
+                limit=100,
+                offset=0,
+            )
+            spend_task = self.get_spend_analytics(time_range=time_range, user_id=user_id)
+            usage_task = self.get_usage_records(
+                time_range=time_range,
+                user_id=user_id,
+                limit=100,
+                offset=0,
+            )
+
+            decisions, tool_calls, spend, usage = await asyncio.gather(
+                decisions_task,
+                tool_calls_task,
+                spend_task,
+                usage_task,
+            )
+
+            return {
+                "timeRange": time_range,
+                "decisions": decisions.to_dict(),
+                "toolCalls": tool_calls.to_dict(),
+                "spend": spend.to_dict(),
+                "usage": [record.to_dict() for record in usage],
+            }
         except Exception as e:
             self.logger.error(f"Get dashboard summary failed: {str(e)}")
             raise AnalyticsError(f"Get dashboard summary failed: {str(e)}")
