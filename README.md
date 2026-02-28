@@ -25,7 +25,7 @@ from governs_ai import GovernsAIClient
 # Create client with organization context
 client = GovernsAIClient(
     api_key="your-api-key",
-    base_url="http://localhost:3002",
+    base_url="https://api.governsai.com",
     org_id="org-456"  # Organization context (static)
 )
 

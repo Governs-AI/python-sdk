@@ -9,6 +9,8 @@ from .confirmation import ConfirmationClient
 from .budget import BudgetClient
 from .tool import ToolClient
 from .analytics import AnalyticsClient
+from .context import ContextClient
+from .documents import DocumentClient
 
 __all__ = [
     "PrecheckClient",
@@ -16,4 +18,6 @@ __all__ = [
     "BudgetClient",
     "ToolClient",
     "AnalyticsClient",
+    "ContextClient",
+    "DocumentClient",
 ]

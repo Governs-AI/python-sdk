@@ -32,6 +32,11 @@ class TestGovernsAIClient:
         )
         return GovernsAIClient(config=config)
 
+    def test_default_base_url_is_production(self):
+        """Default base URL should target managed API, not localhost."""
+        config = GovernsAIConfig(api_key="test-key", org_id="test-org")
+        assert config.base_url == "https://api.governsai.com"
+
     @pytest.mark.asyncio
     async def test_test_connection_success(self, client, mock_http_client):
         """Test successful connection test."""
@@ -146,3 +151,8 @@ class TestGovernsAIClient:
         assert isinstance(config, GovernsAIConfig)
         assert config.api_key == "test-key"
         assert config.org_id == "test-org"
+
+    def test_context_and_document_clients_available(self, client):
+        """Feature parity clients should be initialized on main client."""
+        assert client.context is not None
+        assert client.documents is not None

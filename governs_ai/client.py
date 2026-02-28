@@ -24,6 +24,8 @@ from .clients.confirmation import ConfirmationClient
 from .clients.budget import BudgetClient
 from .clients.tool import ToolClient
 from .clients.analytics import AnalyticsClient
+from .clients.context import ContextClient
+from .clients.documents import DocumentClient
 from .exceptions import GovernsAIError
 
 
@@ -32,7 +34,7 @@ class GovernsAIConfig:
     """Configuration for GovernsAI client."""
 
     api_key: str
-    base_url: str = "http://localhost:3002"
+    base_url: str = "https://api.governsai.com"
     org_id: str = ""
     timeout: int = 30000
     retries: int = 3
@@ -83,7 +85,7 @@ class GovernsAIClient:
         else:
             self.config = GovernsAIConfig(
                 api_key=api_key or os.getenv("GOVERNS_API_KEY", ""),
-                base_url=base_url or os.getenv("GOVERNS_BASE_URL", "http://localhost:3002"),
+                base_url=base_url or os.getenv("GOVERNS_BASE_URL", "https://api.governsai.com"),
                 org_id=org_id or os.getenv("GOVERNS_ORG_ID", ""),
                 timeout=timeout or int(os.getenv("GOVERNS_TIMEOUT", "30000")),
                 retries=retries or int(os.getenv("GOVERNS_RETRIES", "3")),
@@ -116,6 +118,8 @@ class GovernsAIClient:
         self.budget = BudgetClient(self.http_client, self.logger)
         self.tools = ToolClient(self.http_client, self.logger)
         self.analytics = AnalyticsClient(self.http_client, self.logger)
+        self.context = ContextClient(self.http_client, self.logger)
+        self.documents = DocumentClient(self.http_client, self.logger)
 
     @classmethod
     def from_env(cls) -> "GovernsAIClient":
