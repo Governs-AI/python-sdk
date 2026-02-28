@@ -12,6 +12,8 @@ from .clients.confirmation import ConfirmationClient
 from .clients.budget import BudgetClient
 from .clients.tool import ToolClient
 from .clients.analytics import AnalyticsClient
+from .clients.context import ContextClient
+from .clients.documents import DocumentClient
 from .models import (
     PrecheckRequest,
     PrecheckResponse,
@@ -21,6 +23,25 @@ from .models import (
     ConfirmationResponse,
     HealthStatus,
     Decision,
+    SaveContextInput,
+    SaveContextResponse,
+    ContextLLMResponse,
+    ConversationSummary,
+    ConversationItem,
+    MemoryRecord,
+    MemorySearchMetadata,
+    MemorySearchResponse,
+    ResolvedUserDetails,
+    ResolvedUser,
+    DocumentUploadResponse,
+    DocumentChunk,
+    DocumentRecord,
+    DocumentDetails,
+    DocumentListPagination,
+    DocumentListResponse,
+    DocumentSearchSource,
+    DocumentSearchResult,
+    DocumentSearchResponse,
 )
 from .exceptions import (
     GovernsAIError,
@@ -45,6 +66,8 @@ __all__ = [
     "BudgetClient",
     "ToolClient",
     "AnalyticsClient",
+    "ContextClient",
+    "DocumentClient",
     # Data models
     "PrecheckRequest",
     "PrecheckResponse",
@@ -54,6 +77,25 @@ __all__ = [
     "ConfirmationResponse",
     "HealthStatus",
     "Decision",
+    "SaveContextInput",
+    "SaveContextResponse",
+    "ContextLLMResponse",
+    "ConversationSummary",
+    "ConversationItem",
+    "MemoryRecord",
+    "MemorySearchMetadata",
+    "MemorySearchResponse",
+    "ResolvedUserDetails",
+    "ResolvedUser",
+    "DocumentUploadResponse",
+    "DocumentChunk",
+    "DocumentRecord",
+    "DocumentDetails",
+    "DocumentListPagination",
+    "DocumentListResponse",
+    "DocumentSearchSource",
+    "DocumentSearchResult",
+    "DocumentSearchResponse",
     # Exceptions
     "GovernsAIError",
     "PrecheckError",

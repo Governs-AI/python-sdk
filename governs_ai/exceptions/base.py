@@ -35,9 +35,14 @@ class GovernsAIError(Exception):
 class NetworkError(GovernsAIError):
     """Network-related errors."""
 
-    def __init__(self, message: str, original_error: Optional[Exception] = None):
+    def __init__(
+        self,
+        message: str,
+        status_code: Optional[int] = None,
+        original_error: Optional[Exception] = None,
+    ):
         """Initialize network error."""
-        super().__init__(message, retryable=True)
+        super().__init__(message, status_code=status_code, retryable=True)
         self.original_error = original_error
 
 

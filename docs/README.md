@@ -38,7 +38,7 @@ from governs_ai import GovernsAIClient
 # Create client with organization context
 client = GovernsAIClient(
     api_key="your-api-key",
-    base_url="http://localhost:3002",
+    base_url="https://api.governsai.com",
     org_id="org-456"  # Organization context (static)
 )
 
@@ -70,7 +70,7 @@ elif precheck_response.decision == "confirm":
 
 ```bash
 export GOVERNS_API_KEY="your-api-key"
-export GOVERNS_BASE_URL="http://localhost:3002"
+export GOVERNS_BASE_URL="https://api.governsai.com"
 export GOVERNS_ORG_ID="org-456"
 export GOVERNS_TIMEOUT="30000"
 export GOVERNS_RETRIES="3"
@@ -85,7 +85,7 @@ from governs_ai import GovernsAIClient, GovernsAIConfig
 # Explicit configuration
 config = GovernsAIConfig(
     api_key="your-api-key",
-    base_url="http://localhost:3002",
+    base_url="https://api.governsai.com",
     org_id="org-456",
     timeout=30000,
     retries=3,
@@ -423,7 +423,7 @@ client = GovernsAIClient(
 ```python
 GovernsAIClient(
     api_key: str,
-    base_url: str = "http://localhost:3002",
+    base_url: str = "https://api.governsai.com",
     org_id: str,
     timeout: int = 30000,
     retries: int = 3,
@@ -770,7 +770,7 @@ import os
 client = GovernsAIClient(
     api_key=os.getenv("GOVERNS_API_KEY"),
     org_id=os.getenv("GOVERNS_ORG_ID"),
-    base_url=os.getenv("GOVERNS_BASE_URL", "http://localhost:3002")
+    base_url=os.getenv("GOVERNS_BASE_URL", "https://api.governsai.com")
 )
 ```
 

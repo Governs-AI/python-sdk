@@ -6,7 +6,7 @@ HTTP client utilities for the GovernsAI Python SDK.
 
 import aiohttp
 import asyncio
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from ..exceptions.base import NetworkError, AuthenticationError, AuthorizationError, RateLimitError
 
@@ -71,13 +71,18 @@ class HTTPClient:
         """Async context manager exit."""
         await self.close()
 
-    def _get_headers(self, additional_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+    def _get_headers(
+        self,
+        additional_headers: Optional[Dict[str, str]] = None,
+        content_type: Optional[str] = "application/json",
+    ) -> Dict[str, str]:
         """Get default headers for requests."""
         headers = {
             "X-Governs-Key": self.api_key,
-            "Content-Type": "application/json",
             "User-Agent": "governs-ai-python-sdk/1.0.0",
         }
+        if content_type is not None:
+            headers["Content-Type"] = content_type
         if additional_headers:
             headers.update(additional_headers)
         return headers
@@ -99,28 +104,33 @@ class HTTPClient:
             )
         elif response.is_client_error:
             error_msg = response.data.get("message", "Client error")
-            raise NetworkError(f"Client error: {error_msg}")
+            raise NetworkError(f"Client error: {error_msg}", status_code=response.status_code)
         elif response.is_server_error:
             error_msg = response.data.get("message", "Server error")
-            raise NetworkError(f"Server error: {error_msg}")
+            raise NetworkError(f"Server error: {error_msg}", status_code=response.status_code)
 
     async def request(
         self,
         method: str,
         endpoint: str,
         data: Optional[Dict[str, Any]] = None,
+        form_data: Optional[aiohttp.FormData] = None,
         params: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, str]] = None,
     ) -> HTTPResponse:
         """Make HTTP request."""
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        request_headers = self._get_headers(headers)
+        request_headers = self._get_headers(
+            headers,
+            content_type=None if form_data is not None else "application/json",
+        )
 
         try:
             async with self.session.request(
                 method=method,
                 url=url,
-                json=data,
+                json=data if form_data is None else None,
+                data=form_data,
                 params=params,
                 headers=request_headers,
             ) as response:
@@ -166,6 +176,22 @@ class HTTPClient:
     ) -> HTTPResponse:
         """Make POST request."""
         return await self.request("POST", endpoint, data=data, params=params, headers=headers)
+
+    async def post_form_data(
+        self,
+        endpoint: str,
+        form_data: aiohttp.FormData,
+        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> HTTPResponse:
+        """Make POST request with multipart/form-data payload."""
+        return await self.request(
+            "POST",
+            endpoint,
+            form_data=form_data,
+            params=params,
+            headers=headers,
+        )
 
     async def put(
         self,
