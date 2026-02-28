@@ -1,5 +1,9 @@
 # GovernsAI Python SDK
 
+[![npm](https://img.shields.io/npm/v/%40governs-ai%2Fsdk?label=npm%20%40governs-ai%2Fsdk)](https://www.npmjs.com/package/@governs-ai/sdk)
+[![PyPI](https://img.shields.io/pypi/v/governs-ai-sdk?label=PyPI%20governs-ai-sdk)](https://pypi.org/project/governs-ai-sdk/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 A comprehensive Python SDK for integrating AI governance capabilities into your applications. Provides secure control over AI interactions, budget management, policy enforcement, and compliance monitoring.
 
 ## Features
