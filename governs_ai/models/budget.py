@@ -44,6 +44,55 @@ class BudgetContext:
 
 
 @dataclass
+class BudgetResult:
+    """Result of a budget_check() call.
+
+    Example::
+
+        result = await client.budget_check(
+            org_id="org-123", user_id="user-456", estimated_tokens=1000
+        )
+        if not result.allowed:
+            raise RuntimeError("Budget exceeded")
+        if result.warning_threshold_hit:
+            logger.warning("Less than 10% budget remaining")
+    """
+    allowed: bool
+    remaining_tokens: int
+    limit: int
+    warning_threshold_hit: bool = False
+    reason: Optional[str] = None
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "BudgetResult":
+        """Create from dict; auto-computes warning_threshold_hit when < 10% budget remains."""
+        limit = int(data.get("limit", data.get("monthly_limit", 0)))
+        remaining = int(
+            data.get("remaining_tokens",
+            data.get("remaining_budget",
+            data.get("remainingBudget", 0)))
+        )
+        warning = limit > 0 and (remaining / limit) < 0.10
+        return cls(
+            allowed=data.get("allowed", remaining > 0),
+            remaining_tokens=remaining,
+            limit=limit,
+            warning_threshold_hit=data.get("warningThresholdHit", warning),
+            reason=data.get("reason"),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "allowed": self.allowed,
+            "remainingTokens": self.remaining_tokens,
+            "limit": self.limit,
+            "warningThresholdHit": self.warning_threshold_hit,
+            "reason": self.reason,
+        }
+
+
+@dataclass
 class BudgetStatus:
     """Budget status for a user."""
     allowed: bool

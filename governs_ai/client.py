@@ -14,6 +14,7 @@ from .models import (
     PrecheckRequest,
     PrecheckResponse,
     BudgetContext,
+    BudgetResult,
     UsageRecord,
     ConfirmationRequest,
     ConfirmationResponse,
@@ -201,16 +202,58 @@ class GovernsAIClient:
         """
         return await self.budget.get_budget_context(user_id)
 
-    async def record_usage(self, usage: Union[UsageRecord, Dict[str, Any]]) -> None:
-        """
-        Record usage for a user.
+    async def budget_check(
+        self,
+        org_id: str,
+        user_id: str,
+        estimated_tokens: int,
+    ) -> BudgetResult:
+        """Check whether a user is within token budget.
 
-        Args:
-            usage: Usage record or dictionary
+        Returns a :class:`BudgetResult` with ``allowed``, ``remaining_tokens``,
+        ``limit``, and ``warning_threshold_hit`` (True when < 10% remaining).
+
+        Example::
+
+            result = await client.budget_check(
+                org_id="org-123", user_id="user-456", estimated_tokens=1000
+            )
+            if not result.allowed:
+                raise RuntimeError("Budget exceeded")
+        """
+        response = await self.budget.http_client.get(
+            "/api/v1/budget/context",
+            params={"orgId": org_id, "userId": user_id, "estimatedTokens": estimated_tokens},
+        )
+        return BudgetResult.from_dict(response.data)
+
+    async def async_budget_check(
+        self,
+        org_id: str,
+        user_id: str,
+        estimated_tokens: int,
+    ) -> BudgetResult:
+        """Async variant of :meth:`budget_check` (identical — both are coroutines)."""
+        return await self.budget_check(org_id, user_id, estimated_tokens)
+
+    async def record_usage(self, usage: Union[UsageRecord, Dict[str, Any]]) -> None:
+        """Record token and cost usage for a model request.
+
+        Example::
+
+            await client.record_usage(UsageRecord(
+                user_id="user-123", org_id="org-456", provider="openai",
+                model="gpt-4o-mini", input_tokens=100, output_tokens=80,
+                cost=0.0017, cost_type="external",
+            ))
         """
         if isinstance(usage, dict):
             usage = UsageRecord.from_dict(usage)
         await self.budget.record_usage(usage)
+
+    async def async_record_usage(self, usage: Union[UsageRecord, Dict[str, Any]]) -> None:
+        """Async variant of :meth:`record_usage` (identical — both are coroutines)."""
+        return await self.record_usage(usage)
 
     async def create_confirmation(
         self,

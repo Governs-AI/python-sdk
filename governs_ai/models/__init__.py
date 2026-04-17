@@ -5,7 +5,7 @@ Data models for the GovernsAI Python SDK.
 """
 
 from .precheck import PrecheckRequest, PrecheckResponse, Decision
-from .budget import BudgetContext, UsageRecord, BudgetStatus
+from .budget import BudgetContext, UsageRecord, BudgetStatus, BudgetResult
 from .confirmation import ConfirmationRequest, ConfirmationResponse
 from .health import HealthStatus
 from .context import (
@@ -46,6 +46,7 @@ __all__ = [
     "BudgetContext",
     "UsageRecord",
     "BudgetStatus",
+    "BudgetResult",
     "ConfirmationRequest",
     "ConfirmationResponse",
     "HealthStatus",
