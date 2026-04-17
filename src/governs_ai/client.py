@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import httpx
 
+from .memory import MemoryClient
 from .types import BudgetResult, PrecheckResult
 
 
@@ -53,6 +54,12 @@ class GovernsAIClient:
             "Content-Type": "application/json",
             "X-SDK-Language": "python",
         }
+        self.memory = MemoryClient(
+            base_url=self.base_url,
+            headers=self.headers,
+            timeout=self.timeout,
+            org_id=self.org_id,
+        )
 
     def __repr__(self):
         return f"<GovernsAIClient(base_url='{self.base_url}', org_id='{self.org_id}')>"
