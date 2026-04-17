@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import httpx
 
-from .types import PrecheckResult
+from .types import BudgetResult, PrecheckResult
 
 
 class GovernsAIError(Exception):
@@ -180,3 +180,158 @@ class GovernsAIClient:
                     continue
 
         raise PrecheckError(f"Max retries exceeded: {last_error_msg}")
+
+    # ------------------------------------------------------------------
+    # 1.4c — record_usage()
+    # ------------------------------------------------------------------
+
+    def record_usage(
+        self,
+        org_id: str,
+        user_id: str,
+        tokens: int,
+        model: str,
+        *,
+        provider: str = "openai",
+    ) -> None:
+        """Record token usage for a model request.
+
+        Example::
+
+            client.record_usage(
+                org_id="org-1", user_id="user-123",
+                tokens=180, model="gpt-4o-mini",
+            )
+        """
+        payload: Dict[str, Any] = {
+            "orgId": org_id or self.org_id,
+            "userId": user_id,
+            "inputTokens": tokens,
+            "outputTokens": 0,
+            "model": model,
+            "provider": provider,
+        }
+        with httpx.Client(timeout=self.timeout) as http:
+            resp = http.post(
+                f"{self.base_url}/api/v1/usage",
+                json=payload,
+                headers=self.headers,
+            )
+            if resp.status_code >= 400:
+                raise GovernsAIError(
+                    f"record_usage failed with HTTP {resp.status_code}: {resp.text}",
+                    status_code=resp.status_code,
+                )
+
+    async def async_record_usage(
+        self,
+        org_id: str,
+        user_id: str,
+        tokens: int,
+        model: str,
+        *,
+        provider: str = "openai",
+    ) -> None:
+        """Async variant of :meth:`record_usage`."""
+        payload: Dict[str, Any] = {
+            "orgId": org_id or self.org_id,
+            "userId": user_id,
+            "inputTokens": tokens,
+            "outputTokens": 0,
+            "model": model,
+            "provider": provider,
+        }
+        async with httpx.AsyncClient(timeout=self.timeout) as http:
+            resp = await http.post(
+                f"{self.base_url}/api/v1/usage",
+                json=payload,
+                headers=self.headers,
+            )
+            if resp.status_code >= 400:
+                raise GovernsAIError(
+                    f"record_usage failed with HTTP {resp.status_code}: {resp.text}",
+                    status_code=resp.status_code,
+                )
+
+    # ------------------------------------------------------------------
+    # 1.4c — budget_check()
+    # ------------------------------------------------------------------
+
+    def budget_check(
+        self,
+        org_id: str,
+        user_id: str,
+        estimated_tokens: int = 0,
+    ) -> BudgetResult:
+        """Check whether the user/org is within budget.
+
+        Example::
+
+            budget = client.budget_check(org_id="org-1", user_id="u1", estimated_tokens=500)
+            if not budget.allowed:
+                raise RuntimeError("Budget exceeded")
+        """
+        params: Dict[str, Any] = {
+            "orgId": org_id or self.org_id,
+            "userId": user_id,
+            "estimatedTokens": estimated_tokens,
+        }
+        with httpx.Client(timeout=self.timeout) as http:
+            resp = http.get(
+                f"{self.base_url}/api/v1/budget/context",
+                params=params,
+                headers=self.headers,
+            )
+            if resp.status_code >= 400:
+                raise GovernsAIError(
+                    f"budget_check failed with HTTP {resp.status_code}: {resp.text}",
+                    status_code=resp.status_code,
+                )
+        data = resp.json()
+        limit = data.get("limit", data.get("monthly_limit", 0))
+        remaining = data.get("remaining_tokens", data.get("remaining", limit))
+        allowed = data.get("allowed", remaining > 0)
+        warning_threshold_hit = limit > 0 and (remaining / limit) < 0.10
+        return BudgetResult(
+            allowed=allowed,
+            remaining_tokens=int(remaining),
+            limit=int(limit),
+            warning_threshold_hit=warning_threshold_hit,
+            reason=data.get("reason", ""),
+        )
+
+    async def async_budget_check(
+        self,
+        org_id: str,
+        user_id: str,
+        estimated_tokens: int = 0,
+    ) -> BudgetResult:
+        """Async variant of :meth:`budget_check`."""
+        params: Dict[str, Any] = {
+            "orgId": org_id or self.org_id,
+            "userId": user_id,
+            "estimatedTokens": estimated_tokens,
+        }
+        async with httpx.AsyncClient(timeout=self.timeout) as http:
+            resp = await http.get(
+                f"{self.base_url}/api/v1/budget/context",
+                params=params,
+                headers=self.headers,
+            )
+            if resp.status_code >= 400:
+                raise GovernsAIError(
+                    f"budget_check failed with HTTP {resp.status_code}: {resp.text}",
+                    status_code=resp.status_code,
+                )
+        data = resp.json()
+        limit = data.get("limit", data.get("monthly_limit", 0))
+        remaining = data.get("remaining_tokens", data.get("remaining", limit))
+        allowed = data.get("allowed", remaining > 0)
+        warning_threshold_hit = limit > 0 and (remaining / limit) < 0.10
+        return BudgetResult(
+            allowed=allowed,
+            remaining_tokens=int(remaining),
+            limit=int(limit),
+            warning_threshold_hit=warning_threshold_hit,
+            reason=data.get("reason", ""),
+        )
