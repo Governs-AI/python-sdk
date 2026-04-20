@@ -1,6 +1,6 @@
 import asyncio
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 import httpx
 
@@ -274,7 +274,11 @@ class GovernsAIClient:
 
         Example::
 
-            budget = client.budget_check(org_id="org-1", user_id="u1", estimated_tokens=500)
+            budget = client.budget_check(
+                org_id="org-1",
+                user_id="u1",
+                estimated_tokens=500,
+            )
             if not budget.allowed:
                 raise RuntimeError("Budget exceeded")
         """

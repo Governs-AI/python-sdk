@@ -33,7 +33,10 @@ async def test_check_request_auto_enriches_missing_context():
                                 "egress": {"action": "allow"},
                             },
                             "toolAccess": {
-                                "model.chat": {"direction": "ingress", "action": "allow"}
+                                "model.chat": {
+                                    "direction": "ingress",
+                                    "action": "allow",
+                                }
                             },
                             "denyTools": ["python.exec"],
                             "networkScopes": ["net."],
@@ -44,7 +47,9 @@ async def test_check_request_auto_enriches_missing_context():
                 }
             )
         if endpoint == "/api/v1/tools/model.chat/metadata":
-            return _mock_response({"metadata": {"tool_name": "model.chat", "direction": "ingress"}})
+            return _mock_response(
+                {"metadata": {"tool_name": "model.chat", "direction": "ingress"}}
+            )
         if endpoint == "/api/v1/budget/context":
             return _mock_response(
                 {
@@ -81,8 +86,14 @@ async def test_check_request_auto_enriches_missing_context():
 
     assert response.decision == Decision.DENY
     mock_http_client.post.assert_called_once()
-    post_endpoint = mock_http_client.post.call_args.kwargs.get("endpoint") or mock_http_client.post.call_args.args[0]
-    post_payload = mock_http_client.post.call_args.kwargs.get("data") or mock_http_client.post.call_args.args[1]
+    post_endpoint = (
+        mock_http_client.post.call_args.kwargs.get("endpoint")
+        or mock_http_client.post.call_args.args[0]
+    )
+    post_payload = (
+        mock_http_client.post.call_args.kwargs.get("data")
+        or mock_http_client.post.call_args.args[1]
+    )
 
     assert post_endpoint == "/api/v1/precheck"
     assert post_payload["raw_text"] == "hello"

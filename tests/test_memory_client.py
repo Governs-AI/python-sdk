@@ -36,8 +36,16 @@ def test_search_returns_memory_results(client):
             200,
             json={
                 "results": [
-                    {"id": "mem-1", "content": "Weekly summaries preferred", "score": 0.95},
-                    {"id": "mem-2", "content": "Prefers email over Slack", "score": 0.80},
+                    {
+                        "id": "mem-1",
+                        "content": "Weekly summaries preferred",
+                        "score": 0.95,
+                    },
+                    {
+                        "id": "mem-2",
+                        "content": "Prefers email over Slack",
+                        "score": 0.80,
+                    },
                 ]
             },
         )

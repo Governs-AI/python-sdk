@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 
 @dataclass
@@ -16,7 +16,11 @@ class BudgetResult:
 
     Example::
 
-        budget = client.budget_check(org_id="org-1", user_id="user-1", estimated_tokens=500)
+        budget = client.budget_check(
+            org_id="org-1",
+            user_id="user-1",
+            estimated_tokens=500,
+        )
         if not budget.allowed:
             raise RuntimeError("Budget exceeded")
         if budget.warning_threshold_hit:

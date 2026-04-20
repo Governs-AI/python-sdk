@@ -1,4 +1,4 @@
-"""Integration tests for precheck() — require local precheck service on localhost:8000."""
+"""Integration tests for precheck() against a local localhost:8000 service."""
 
 import os
 

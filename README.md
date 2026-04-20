@@ -4,16 +4,15 @@
 [![PyPI](https://img.shields.io/pypi/v/governs-ai-sdk?label=PyPI%20governs-ai-sdk)](https://pypi.org/project/governs-ai-sdk/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-A comprehensive Python SDK for integrating AI governance capabilities into your applications. Provides secure control over AI interactions, budget management, policy enforcement, and compliance monitoring.
+A Python SDK for integrating GovernsAI governance checks into application code. The current package ships a lightweight `src/` layout centered on precheck requests, budget helpers, usage recording, and context-memory operations, with lower-level models and client utilities available under `governs_ai.models`, `governs_ai.clients`, `governs_ai.utils`, and `governs_ai.exceptions`.
 
 ## Features
 
-- **Request Prechecking**: Validate AI requests against governance policies
-- **Budget Management**: Track and enforce usage budgets
-- **Confirmation Workflows**: WebAuthn-based approval processes
-- **Tool Management**: Register and execute tools with governance
-- **Analytics**: Comprehensive usage and decision analytics
-- **Multi-User Support**: Organization-level context with user-specific operations
+- **Sync and async precheck helpers** for `/api/v1/precheck`
+- **Budget checks and usage recording** for governed model traffic
+- **Context memory store/search/delete helpers** via `client.memory`
+- **Typed result objects** for precheck, budget, and memory flows
+- **Lower-level modules** for advanced integrations under `governs_ai.clients`, `governs_ai.models`, `governs_ai.utils`, and `governs_ai.exceptions`
 
 ## Installation
 
@@ -26,38 +25,52 @@ pip install governs-ai-sdk
 ```python
 from governs_ai import GovernsAIClient
 
-# Create client with organization context
 client = GovernsAIClient(
     api_key="your-api-key",
-    base_url="https://api.governsai.com",
-    org_id="org-456"  # Organization context (static)
+    base_url="https://api.governs.ai",
+    org_id="org-456",
 )
 
-# Test connection
-is_connected = await client.test_connection()
-print(f"Connected: {is_connected}")
-
-# Precheck a request for a specific user (userId is dynamic)
-user_id = "user-123"
-precheck_response = await client.precheck_request(
+result = client.precheck(
+    content="Summarize this document",
     tool="model.chat",
-    scope="net.external",
-    raw_text="Hello, how are you?",
-    payload={"messages": [{"role": "user", "content": "Hello"}]},
-    tags=["demo", "chat"],
-    user_id=user_id
 )
 
-print(f"Decision: {precheck_response.decision}")
-if precheck_response.decision == "deny":
-    print(f"Blocked: {precheck_response.reasons}")
-elif precheck_response.decision == "confirm":
-    print("Confirmation required")
+print(result.decision)
+print(result.reasons)
+```
+
+```python
+import asyncio
+
+from governs_ai import GovernsAIClient
+
+
+async def main() -> None:
+    client = GovernsAIClient(api_key="your-api-key", org_id="org-456")
+    result = await client.async_precheck(
+        content="Hello from asyncio",
+        tool="model.chat",
+    )
+    print(result.decision)
+
+
+asyncio.run(main())
+```
+
+## Development
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pytest
+pytest -m integration
 ```
 
 ## Documentation
 
-For complete documentation, see [docs/README.md](docs/README.md).
+Additional package notes live in [docs/README.md](docs/README.md). The most up-to-date repository state and architecture summary lives in `PROJECT_SPECS.md`.
 
 ## License
 

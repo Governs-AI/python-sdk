@@ -46,7 +46,12 @@ def test_budget_check_allowed(client):
     respx.get(f"{BASE}/api/v1/budget/context").mock(
         return_value=httpx.Response(
             200,
-            json={"allowed": True, "remaining_tokens": 9000, "limit": 10000, "reason": ""},
+            json={
+                "allowed": True,
+                "remaining_tokens": 9000,
+                "limit": 10000,
+                "reason": "",
+            },
         )
     )
     result = client.budget_check(org_id="org-1", user_id="user-1")
@@ -60,7 +65,12 @@ def test_budget_check_denied_when_over_budget(client):
     respx.get(f"{BASE}/api/v1/budget/context").mock(
         return_value=httpx.Response(
             200,
-            json={"allowed": False, "remaining_tokens": 0, "limit": 10000, "reason": "over_budget"},
+            json={
+                "allowed": False,
+                "remaining_tokens": 0,
+                "limit": 10000,
+                "reason": "over_budget",
+            },
         )
     )
     result = client.budget_check(org_id="org-1", user_id="user-1")
@@ -74,7 +84,12 @@ def test_budget_check_warning_threshold_hit(client):
     respx.get(f"{BASE}/api/v1/budget/context").mock(
         return_value=httpx.Response(
             200,
-            json={"allowed": True, "remaining_tokens": 500, "limit": 10000, "reason": ""},
+            json={
+                "allowed": True,
+                "remaining_tokens": 500,
+                "limit": 10000,
+                "reason": "",
+            },
         )
     )
     result = client.budget_check(org_id="org-1", user_id="user-1")

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [dev, main]
   pull_request:
-    branches: [main]
+    branches: [dev, main]
 
 jobs:
   lint:
@@ -22,10 +22,10 @@ jobs:
         run: pip install black flake8
 
       - name: black
-        run: black --check governs_ai/ tests/
+        run: black --check src/governs_ai/ tests/
 
       - name: flake8
-        run: flake8 governs_ai/ tests/ --max-line-length=88 --extend-ignore=E203,W503
+        run: flake8 src/governs_ai/ tests/ --max-line-length=88 --extend-ignore=E203,W503
 
   typecheck:
     name: Type Check
@@ -42,7 +42,7 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: mypy
-        run: mypy governs_ai/ --ignore-missing-imports
+        run: mypy src/governs_ai/ --ignore-missing-imports
 
   test:
     name: Tests

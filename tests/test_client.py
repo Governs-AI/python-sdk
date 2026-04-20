@@ -1,11 +1,9 @@
 import json
-import time
 from unittest.mock import patch
 
 import pytest
 
 from governs_ai.client import GovernsAIClient, PrecheckError
-from governs_ai.types import PrecheckResult
 
 
 @pytest.fixture

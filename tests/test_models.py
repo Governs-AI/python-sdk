@@ -2,15 +2,12 @@
 Tests for data models.
 """
 
-import pytest
 from governs_ai.models import (
     PrecheckRequest,
     PrecheckResponse,
     Decision,
     BudgetContext,
     UsageRecord,
-    ConfirmationRequest,
-    ConfirmationResponse,
     HealthStatus,
 )
 
@@ -26,7 +23,7 @@ class TestPrecheckRequest:
             raw_text="Hello",
             payload={"messages": []},
             tags=["test"],
-            user_id="user-123"
+            user_id="user-123",
         )
 
         assert request.tool == "model.chat"
@@ -42,7 +39,7 @@ class TestPrecheckRequest:
             raw_text="Hello",
             payload={"messages": []},
             tags=["test"],
-            user_id="user-123"
+            user_id="user-123",
         )
 
         data = request.to_dict()
@@ -59,7 +56,7 @@ class TestPrecheckRequest:
             "rawText": "Hello",
             "payload": {"messages": []},
             "tags": ["test"],
-            "userId": "user-123"
+            "userId": "user-123",
         }
 
         request = PrecheckRequest.from_dict(data)
@@ -75,9 +72,7 @@ class TestPrecheckResponse:
     def test_creation(self):
         """Test PrecheckResponse creation."""
         response = PrecheckResponse(
-            decision=Decision.ALLOW,
-            reasons=[],
-            metadata={"test": "value"}
+            decision=Decision.ALLOW, reasons=[], metadata={"test": "value"}
         )
 
         assert response.decision == Decision.ALLOW
@@ -86,10 +81,7 @@ class TestPrecheckResponse:
 
     def test_string_decision(self):
         """Test PrecheckResponse with string decision."""
-        response = PrecheckResponse(
-            decision="allow",
-            reasons=[]
-        )
+        response = PrecheckResponse(decision="allow", reasons=[])
 
         assert response.decision == Decision.ALLOW
 
@@ -109,7 +101,7 @@ class TestPrecheckResponse:
             "reasons": ["Policy check passed"],
             "metadata": {"test": "value"},
             "requiresConfirmation": False,
-            "confirmationUrl": None
+            "confirmationUrl": None,
         }
 
         response = PrecheckResponse.from_dict(data)
@@ -128,7 +120,7 @@ class TestBudgetContext:
             monthly_limit=1000.0,
             current_spend=250.0,
             remaining_budget=750.0,
-            currency="USD"
+            currency="USD",
         )
 
         assert context.monthly_limit == 1000.0
@@ -144,7 +136,7 @@ class TestBudgetContext:
             "remainingBudget": 750.0,
             "currency": "USD",
             "periodStart": "2024-01-01",
-            "periodEnd": "2024-01-31"
+            "periodEnd": "2024-01-31",
         }
 
         context = BudgetContext.from_dict(data)
@@ -169,7 +161,7 @@ class TestUsageRecord:
             input_tokens=100,
             output_tokens=50,
             cost=0.15,
-            cost_type="external"
+            cost_type="external",
         )
 
         assert record.user_id == "user-123"
@@ -193,7 +185,7 @@ class TestUsageRecord:
             "outputTokens": 50,
             "cost": 0.15,
             "costType": "external",
-            "timestamp": "2024-01-01T00:00:00Z"
+            "timestamp": "2024-01-01T00:00:00Z",
         }
 
         record = UsageRecord.from_dict(data)
@@ -216,7 +208,7 @@ class TestHealthStatus:
         status = HealthStatus(
             status="healthy",
             services={"api": "healthy", "db": "healthy"},
-            version="1.0.0"
+            version="1.0.0",
         )
 
         assert status.status == "healthy"
@@ -230,7 +222,7 @@ class TestHealthStatus:
             "status": "healthy",
             "services": {"api": "healthy", "db": "healthy"},
             "timestamp": "2024-01-01T00:00:00Z",
-            "version": "1.0.0"
+            "version": "1.0.0",
         }
 
         status = HealthStatus.from_dict(data)
