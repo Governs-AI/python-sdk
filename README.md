@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/%40governs-ai%2Fsdk?label=npm%20%40governs-ai%2Fsdk)](https://www.npmjs.com/package/@governs-ai/sdk)
 [![PyPI](https://img.shields.io/pypi/v/governs-ai-sdk?label=PyPI%20governs-ai-sdk)](https://pypi.org/project/governs-ai-sdk/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Elastic%202.0-blue.svg)](LICENSE)
 
 A Python SDK for integrating GovernsAI governance checks into application code. The current package ships a lightweight `src/` layout centered on precheck requests, budget helpers, usage recording, and context-memory operations, with lower-level models and client utilities available under `governs_ai.models`, `governs_ai.clients`, `governs_ai.utils`, and `governs_ai.exceptions`.
 
@@ -74,4 +74,4 @@ Additional package notes live in [docs/README.md](docs/README.md). The most up-t
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+Elastic License 2.0 — see [LICENSE](LICENSE) for details. Production hosting of the SDK as a managed service requires a separate agreement; normal application-side use in your own product is unrestricted.

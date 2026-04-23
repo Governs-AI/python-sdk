@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Elastic-2.0
 # Copyright (c) 2026 GovernsAI. All rights reserved.
 """
 Precheck client for request validation and governance compliance.

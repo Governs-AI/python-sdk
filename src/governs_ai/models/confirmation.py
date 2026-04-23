@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Elastic-2.0
 # Copyright (c) 2026 GovernsAI. All rights reserved.
 """
 Confirmation data models for WebAuthn-based approval workflows.
