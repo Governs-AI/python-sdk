@@ -192,32 +192,69 @@ class GovernsAIClient:
     # 1.4c — record_usage()
     # ------------------------------------------------------------------
 
-    def record_usage(
+    _USAGE_KWARG_MAP = {
+        "output_tokens": "outputTokens",
+        "tokens_out": "outputTokens",
+        "provider": "provider",
+        "cost": "cost",
+        "tool": "toolId",
+        "tool_id": "toolId",
+        "correlation_id": "correlationId",
+        "metadata": "metadata",
+    }
+
+    def _build_usage_payload(
         self,
         org_id: str,
         user_id: str,
         tokens: int,
         model: str,
-        *,
-        provider: str = "openai",
-    ) -> None:
-        """Record token usage for a model request.
-
-        Example::
-
-            client.record_usage(
-                org_id="org-1", user_id="user-123",
-                tokens=180, model="gpt-4o-mini",
-            )
-        """
+        extras: Dict[str, Any],
+    ) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "orgId": org_id or self.org_id,
             "userId": user_id,
             "inputTokens": tokens,
             "outputTokens": 0,
             "model": model,
-            "provider": provider,
+            "provider": "openai",
         }
+        for key, value in extras.items():
+            if value is None:
+                continue
+            payload_key = self._USAGE_KWARG_MAP.get(key, key)
+            payload[payload_key] = value
+        return payload
+
+    def record_usage(
+        self,
+        org_id: str,
+        user_id: str,
+        tokens: int,
+        model: str,
+        **kwargs: Any,
+    ) -> None:
+        """Record token usage for a model request.
+
+        Args:
+            org_id: Organization ID (falls back to ``client.org_id``).
+            user_id: End-user identifier.
+            tokens: Input token count for the request.
+            model: Model identifier (e.g., ``"gpt-4o-mini"``).
+            **kwargs: Optional extras forwarded to the platform API. Recognised
+                keys: ``output_tokens``, ``provider``, ``cost``, ``tool_id``,
+                ``correlation_id``, ``metadata``. Unknown keys are passed
+                through unchanged.
+
+        Example::
+
+            client.record_usage(
+                org_id="org-1", user_id="user-123",
+                tokens=180, model="gpt-4o-mini",
+                output_tokens=42, cost=0.0012,
+            )
+        """
+        payload = self._build_usage_payload(org_id, user_id, tokens, model, kwargs)
         with httpx.Client(timeout=self.timeout) as http:
             resp = http.post(
                 f"{self.base_url}/api/v1/usage",
@@ -226,7 +263,8 @@ class GovernsAIClient:
             )
             if resp.status_code >= 400:
                 raise GovernsAIError(
-                    f"record_usage failed with HTTP {resp.status_code}: {resp.text}",
+                    f"record_usage failed with HTTP {resp.status_code}: {resp.text} — "
+                    f"verify org_id/user_id and that the API key has usage write scope",
                     status_code=resp.status_code,
                 )
 
@@ -236,18 +274,13 @@ class GovernsAIClient:
         user_id: str,
         tokens: int,
         model: str,
-        *,
-        provider: str = "openai",
+        **kwargs: Any,
     ) -> None:
-        """Async variant of :meth:`record_usage`."""
-        payload: Dict[str, Any] = {
-            "orgId": org_id or self.org_id,
-            "userId": user_id,
-            "inputTokens": tokens,
-            "outputTokens": 0,
-            "model": model,
-            "provider": provider,
-        }
+        """Async variant of :meth:`record_usage`.
+
+        Accepts the same arguments and kwargs as the sync form.
+        """
+        payload = self._build_usage_payload(org_id, user_id, tokens, model, kwargs)
         async with httpx.AsyncClient(timeout=self.timeout) as http:
             resp = await http.post(
                 f"{self.base_url}/api/v1/usage",
@@ -256,7 +289,8 @@ class GovernsAIClient:
             )
             if resp.status_code >= 400:
                 raise GovernsAIError(
-                    f"record_usage failed with HTTP {resp.status_code}: {resp.text}",
+                    f"record_usage failed with HTTP {resp.status_code}: {resp.text} — "
+                    f"verify org_id/user_id and that the API key has usage write scope",
                     status_code=resp.status_code,
                 )
 

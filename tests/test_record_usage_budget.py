@@ -42,6 +42,47 @@ async def test_async_record_usage_sends_correct_payload(client):
 
 
 @respx.mock
+def test_record_usage_succeeds_on_204_no_content(client):
+    """Platform API returns 204 No Content — SDK must not raise or try to parse body."""
+    respx.post(f"{BASE}/api/v1/usage").mock(return_value=httpx.Response(204))
+    client.record_usage(org_id="org-1", user_id="user-123", tokens=10, model="gpt-4o")
+
+
+@respx.mock
+async def test_async_record_usage_succeeds_on_204_no_content(client):
+    respx.post(f"{BASE}/api/v1/usage").mock(return_value=httpx.Response(204))
+    await client.async_record_usage(
+        org_id="org-1", user_id="user-123", tokens=10, model="gpt-4o"
+    )
+
+
+@respx.mock
+def test_record_usage_forwards_kwargs_to_payload(client):
+    """Recognised kwargs are mapped to camelCase platform fields; unknown kwargs pass through."""
+    route = respx.post(f"{BASE}/api/v1/usage").mock(return_value=httpx.Response(204))
+    client.record_usage(
+        org_id="org-1",
+        user_id="user-123",
+        tokens=100,
+        model="gpt-4o",
+        output_tokens=50,
+        cost=0.0012,
+        provider="anthropic",
+        tool_id="web_search",
+        correlation_id="req-abc",
+        metadata={"session": "s1"},
+    )
+    body = json.loads(route.calls[0].request.content)
+    assert body["inputTokens"] == 100
+    assert body["outputTokens"] == 50
+    assert body["cost"] == 0.0012
+    assert body["provider"] == "anthropic"
+    assert body["toolId"] == "web_search"
+    assert body["correlationId"] == "req-abc"
+    assert body["metadata"] == {"session": "s1"}
+
+
+@respx.mock
 def test_budget_check_allowed(client):
     respx.get(f"{BASE}/api/v1/budget/context").mock(
         return_value=httpx.Response(
