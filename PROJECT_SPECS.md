@@ -49,7 +49,7 @@ python-sdk/
 │   ├── exceptions/          # SDK exception hierarchy
 │   └── utils/               # HTTP, retry, and logging helpers
 ├── tests/                    # Unit tests plus integration tests
-├── LICENSE                   # MIT license
+├── LICENSE                   # Elastic License 2.0
 ├── pyproject.toml            # Packaging, dependency, and pytest config
 ├── README.md                 # Current top-level developer guide
 └── PROJECT_SPECS.md          # Living project state document
@@ -119,6 +119,7 @@ python-sdk/
 - **Security Audits**: No formal audit record is tracked here; current safeguards are dependency pinning plus CI secret scanning.
 
 ## Recent Changes Log
+- **2026-04-23**: Switched package license from MIT to Elastic License 2.0 to match TASKS.md §1.4a; updated `LICENSE`, `pyproject.toml`, README/docs references, and SPDX headers on all `src/` modules.
 - **2026-04-20**: Consolidated the package into a single `src/governs_ai` tree, removing the duplicate root package layout that broke packaging and imports.
 - **2026-04-20**: Corrected `pyproject.toml` license metadata to MIT, updated the LICENSE year to 2026, and added missing runtime/dev dependencies needed for the shipped code and tests.
 - **2026-04-20**: Updated CI to validate `src/governs_ai`, enabled checks on `dev`, and verified `black`, `flake8`, `mypy`, and `pytest` locally.

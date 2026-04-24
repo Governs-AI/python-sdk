@@ -814,4 +814,4 @@ The Python SDK follows the same architectural patterns as the TypeScript SDK:
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+Elastic License 2.0 — see [LICENSE](../LICENSE) for details. Managed-service redistribution requires a separate agreement; integrating the SDK into your own application is unrestricted.
