@@ -46,7 +46,7 @@ class GovernsAPIError(RuntimeError):
 
 
 @dataclass
-class Decision:
+class PrecheckDecision:
     """Decision returned by the precheck service.
 
     Mirrors precheck's `DecisionResponse` (precheck/app/models.py).
@@ -60,7 +60,7 @@ class Decision:
     raw: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Decision":
+    def from_dict(cls, data: Dict[str, Any]) -> "PrecheckDecision":
         return cls(
             decision=data.get("decision", "deny"),
             raw_text_out=data.get("raw_text_out", ""),
@@ -125,7 +125,7 @@ class SyncClient:
         policy_config: Optional[Dict[str, Any]] = None,
         tool_config: Optional[Dict[str, Any]] = None,
         budget_context: Optional[Dict[str, Any]] = None,
-    ) -> Decision:
+    ) -> PrecheckDecision:
         """Call POST /api/v1/precheck with retries + simple backoff.
 
         Retries only on transient failures (network errors, 5xx, 429).
@@ -154,7 +154,7 @@ class SyncClient:
         raw_text: str,
         scope: Optional[str] = None,
         corr_id: Optional[str] = None,
-    ) -> Decision:
+    ) -> PrecheckDecision:
         """Call POST /api/v1/postcheck — same shape as precheck."""
         payload: Dict[str, Any] = {"tool": tool, "raw_text": raw_text}
         if scope is not None:
@@ -182,7 +182,7 @@ class SyncClient:
         self.close()
 
     # ─── internals ────────────────────────────────────────────────────
-    def _post_with_retry(self, path: str, payload: Dict[str, Any]) -> Decision:
+    def _post_with_retry(self, path: str, payload: Dict[str, Any]) -> PrecheckDecision:
         url = f"{self.base_url}{path}"
         last_exc: Optional[Exception] = None
         for attempt in range(self.retries + 1):
@@ -200,7 +200,7 @@ class SyncClient:
                     body = resp.json()
                 except ValueError:
                     raise GovernsAPIError(resp.status_code, "invalid JSON", resp.text)
-                return Decision.from_dict(body)
+                return PrecheckDecision.from_dict(body)
 
             # 429 / 5xx are retriable
             if resp.status_code == 429 or 500 <= resp.status_code < 600:
@@ -237,7 +237,7 @@ def precheck(
     tool: str,
     raw_text: str,
     **kwargs: Any,
-) -> Decision:
+) -> PrecheckDecision:
     """One-shot precheck. For repeated calls, prefer `SyncClient(...).precheck()`."""
     with SyncClient(api_key=api_key, base_url=base_url) as client:
         return client.precheck(tool=tool, raw_text=raw_text, **kwargs)

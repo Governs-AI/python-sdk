@@ -14,7 +14,7 @@ import pytest
 import requests
 
 from governs_ai.sync import (
-    Decision,
+    PrecheckDecision,
     GovernsAPIError,
     SyncClient,
     precheck as oneshot_precheck,
@@ -71,7 +71,7 @@ def test_precheck_returns_decision():
         "ts": 12345,
     })) as mock_post:
         d = c.precheck(tool="chat", raw_text="hi jane@example.com")
-        assert isinstance(d, Decision)
+        assert isinstance(d, PrecheckDecision)
         assert d.decision == "transform"
         assert d.raw_text_out == "redacted"
         assert d.allowed is True
@@ -106,7 +106,7 @@ def test_precheck_passes_optional_fields():
 
 
 def test_deny_decision_helpers():
-    d = Decision.from_dict({"decision": "deny", "raw_text_out": "", "reasons": ["x"]})
+    d = PrecheckDecision.from_dict({"decision": "deny", "raw_text_out": "", "reasons": ["x"]})
     assert d.denied
     assert not d.allowed
 
@@ -164,7 +164,7 @@ def test_oneshot_precheck_uses_context_manager(monkeypatch):
 
     def fake_precheck(self, **kwargs):
         captured.update(kwargs)
-        return Decision.from_dict({"decision": "allow", "raw_text_out": "ok"})
+        return PrecheckDecision.from_dict({"decision": "allow", "raw_text_out": "ok"})
 
     monkeypatch.setattr(SyncClient, "precheck", fake_precheck)
     monkeypatch.setattr(SyncClient, "close", lambda self: None)
