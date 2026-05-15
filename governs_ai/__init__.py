@@ -7,6 +7,8 @@ A comprehensive Python SDK for integrating AI governance capabilities into your 
 """
 
 from .client import GovernsAIClient, GovernsAIConfig
+from .sync import SyncClient, PrecheckDecision, GovernsAPIError, precheck
+from .async_client import AsyncClient
 from .clients.precheck import PrecheckClient
 from .clients.confirmation import ConfirmationClient
 from .clients.budget import BudgetClient

@@ -4,6 +4,8 @@
 Precheck-specific exceptions.
 """
 
+from typing import Any, Dict, Optional
+
 from .base import GovernsAIError
 
 
