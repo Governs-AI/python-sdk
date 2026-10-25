@@ -42,7 +42,7 @@ class ConfirmationClient:
         try:
             self.logger.debug(f"Creating confirmation: {request.request_type}")
             response = await self.http_client.post(
-                "/confirmation",
+                "/api/v1/confirmation/create",
                 data=request.to_dict(),
             )
             return ConfirmationResponse.from_dict(response.data)
@@ -63,7 +63,7 @@ class ConfirmationClient:
         try:
             self.logger.debug(f"Getting confirmation status: {correlation_id}")
             response = await self.http_client.get(
-                f"/confirmation/{correlation_id}",
+                f"/api/v1/confirmation/{correlation_id}",
             )
             return ConfirmationStatus.from_dict(response.data)
         except Exception as e:
@@ -100,11 +100,11 @@ class ConfirmationClient:
             try:
                 status = await self.get_confirmation_status(correlation_id)
                 
-                if status.approved:
+                if status.status == "approved":
                     self.logger.info(f"Confirmation approved: {correlation_id}")
                     return status
-                
-                if status.status == "rejected":
+
+                if status.status in ("denied", "cancelled", "consumed", "rejected"):
                     self.logger.warning(f"Confirmation rejected: {correlation_id}")
                     raise ConfirmationRejectedError(
                         f"Confirmation was rejected: {correlation_id}",
@@ -137,6 +137,31 @@ class ConfirmationClient:
                 self.logger.error(f"Poll confirmation failed: {str(e)}")
                 raise ConfirmationError(f"Poll confirmation failed: {str(e)}")
 
+    async def consume_confirmation(self, correlation_id: str) -> ConfirmationStatus:
+        """
+        Claim an approved confirmation for exactly one execution.
+
+        Call this right before running the approved action: it moves the
+        confirmation from approved to consumed atomically, and a second call
+        fails, so one approval cannot authorise two runs.
+
+        Args:
+            correlation_id: Correlation ID of the confirmation
+
+        Returns:
+            ConfirmationStatus with status "consumed"
+        """
+        try:
+            self.logger.debug(f"Consuming confirmation: {correlation_id}")
+            response = await self.http_client.post(
+                f"/api/v1/confirmation/{correlation_id}/consume",
+                data={},
+            )
+            return ConfirmationStatus.from_dict(response.data)
+        except Exception as e:
+            self.logger.error(f"Consume confirmation failed: {str(e)}")
+            raise ConfirmationError(f"Consume confirmation failed: {str(e)}")
+
     async def cancel_confirmation(self, correlation_id: str) -> bool:
         """
         Cancel a confirmation request.
@@ -149,7 +174,10 @@ class ConfirmationClient:
         """
         try:
             self.logger.debug(f"Cancelling confirmation: {correlation_id}")
-            response = await self.http_client.delete(f"/confirmation/{correlation_id}")
+            response = await self.http_client.post(
+                "/api/v1/confirmation/cancel",
+                data={"correlationId": correlation_id},
+            )
             return response.is_success
         except Exception as e:
             self.logger.error(f"Cancel confirmation failed: {str(e)}")

@@ -54,7 +54,7 @@ from .exceptions import (
     AnalyticsError,
 )
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "GovernsAI"
 __email__ = "support@governs.ai"
 

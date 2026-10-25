@@ -67,7 +67,7 @@ async def test_check_request_auto_enriches_missing_context():
         }
     )
 
-    client = PrecheckClient(mock_http_client, GovernsAILogger())
+    client = PrecheckClient(mock_http_client, GovernsAILogger(), send_policy_config=True)
     request = PrecheckRequest(
         tool="model.chat",
         scope="net.external",
@@ -89,3 +89,32 @@ async def test_check_request_auto_enriches_missing_context():
     assert "policy_config" in post_payload
     assert "tool_config" in post_payload
     assert "budget_context" in post_payload
+
+
+@pytest.mark.asyncio
+async def test_policy_config_not_fetched_by_default():
+    """Precheck resolves the org policy itself; the SDK only adds tool/budget context."""
+    mock_http_client = AsyncMock()
+    requested = []
+
+    async def get_side_effect(endpoint, params=None, headers=None):
+        requested.append(endpoint)
+        if endpoint == "/api/v1/tools/model.chat/metadata":
+            return _mock_response({"metadata": {"tool_name": "model.chat"}})
+        if endpoint == "/api/v1/budget/context":
+            return _mock_response({"monthly_limit": 10.0})
+        raise AssertionError(f"Unexpected GET endpoint: {endpoint}")
+
+    mock_http_client.get.side_effect = get_side_effect
+    mock_http_client.post.return_value = _mock_response({"decision": "allow", "reasons": []})
+
+    client = PrecheckClient(mock_http_client, GovernsAILogger())
+    await client.check_request(
+        PrecheckRequest(tool="model.chat", scope="net.external", raw_text="hi", payload={}, tags=[])
+    )
+
+    assert "/api/v1/policies" not in requested
+    post_payload = mock_http_client.post.call_args.kwargs.get("data") or mock_http_client.post.call_args.args[1]
+    assert post_payload.get("policy_config") is None
+    assert post_payload["tool_config"] == {"tool_name": "model.chat"}
+
