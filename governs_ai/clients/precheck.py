@@ -15,10 +15,20 @@ from ..exceptions.precheck import PrecheckError
 class PrecheckClient:
     """Client for precheck operations."""
 
-    def __init__(self, http_client: HTTPClient, logger: GovernsAILogger):
-        """Initialize precheck client."""
+    def __init__(
+        self,
+        http_client: HTTPClient,
+        logger: GovernsAILogger,
+        send_policy_config: bool = False,
+    ):
+        """Initialize precheck client.
+
+        send_policy_config: also fetch and send the org policy. Precheck
+        already resolves it from the API key, so this is off by default.
+        """
         self.http_client = http_client
         self.logger = logger
+        self.send_policy_config = send_policy_config
 
     async def check_request(self, request: PrecheckRequest) -> PrecheckResponse:
         """
@@ -44,7 +54,7 @@ class PrecheckClient:
 
     async def _enrich_request(self, request: PrecheckRequest) -> PrecheckRequest:
         """Enrich request with platform policy/tool/budget context when missing."""
-        needs_policy = request.policy_config is None
+        needs_policy = self.send_policy_config and request.policy_config is None
         needs_tool = request.tool_config is None and bool(request.tool)
         needs_budget = request.budget_context is None
 

@@ -41,6 +41,10 @@ class GovernsAIConfig:
     retry_delay: int = 1000
     logger: Optional[Any] = None
     http_client: Optional[HTTPClient] = None
+    # Fetch the org's policy and send it as policy_config. Off by default:
+    # precheck resolves the org's dashboard policy from the API key and
+    # ignores a payload policy whenever the org has one.
+    send_policy_config: bool = False
 
     def __post_init__(self):
         """Validate configuration after initialization."""
@@ -113,7 +117,11 @@ class GovernsAIClient:
             )
 
         # Initialize feature clients
-        self.precheck = PrecheckClient(self.http_client, self.logger)
+        self.precheck = PrecheckClient(
+            self.http_client,
+            self.logger,
+            send_policy_config=self.config.send_policy_config,
+        )
         self.confirmation = ConfirmationClient(self.http_client, self.logger)
         self.budget = BudgetClient(self.http_client, self.logger)
         self.tools = ToolClient(self.http_client, self.logger)

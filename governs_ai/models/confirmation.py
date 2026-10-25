@@ -42,6 +42,16 @@ class ConfirmationRequest:
         }
 
 
+def _unwrap(data: Dict[str, Any]) -> Dict[str, Any]:
+    """The platform nests the record under `confirmation`; accept both forms."""
+    inner = data.get("confirmation")
+    return inner if isinstance(inner, dict) else data
+
+
+# Statuses after which nothing changes. `consumed` = approved and used once.
+FINAL_STATUSES = ("approved", "denied", "expired", "cancelled", "consumed")
+
+
 @dataclass
 class ConfirmationResponse:
     """Response model for confirmation operations."""
@@ -52,12 +62,13 @@ class ConfirmationResponse:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ConfirmationResponse":
-        """Create from dictionary."""
+        """Create from the platform's `/confirmation/create` response."""
+        record = _unwrap(data)
         return cls(
-            correlation_id=data["correlationId"],
-            confirmation_url=data["confirmationUrl"],
-            status=data["status"],
-            expires_at=data.get("expiresAt"),
+            correlation_id=record["correlationId"],
+            confirmation_url=data.get("confirmationUrl") or record.get("confirmationUrl", ""),
+            status=record["status"],
+            expires_at=record.get("expiresAt"),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,24 +83,37 @@ class ConfirmationResponse:
 
 @dataclass
 class ConfirmationStatus:
-    """Status model for confirmation tracking."""
+    """Status model for confirmation tracking.
+
+    status is one of pending, approved, denied, expired, cancelled, consumed.
+    """
     correlation_id: str
     status: str
     approved: bool
     approved_at: Optional[str] = None
     rejected_at: Optional[str] = None
     expires_at: Optional[str] = None
+    request_type: Optional[str] = None
+    request_payload: Optional[Dict[str, Any]] = None
+
+    @property
+    def is_final(self) -> bool:
+        return self.status in FINAL_STATUSES
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ConfirmationStatus":
-        """Create from dictionary."""
+        """Create from `GET /api/v1/confirmation/:id` (nested or flat)."""
+        record = _unwrap(data)
+        status = record["status"]
         return cls(
-            correlation_id=data["correlationId"],
-            status=data["status"],
-            approved=data["approved"],
-            approved_at=data.get("approvedAt"),
-            rejected_at=data.get("rejectedAt"),
-            expires_at=data.get("expiresAt"),
+            correlation_id=record["correlationId"],
+            status=status,
+            approved=bool(record.get("approved", status in ("approved", "consumed"))),
+            approved_at=record.get("approvedAt"),
+            rejected_at=record.get("rejectedAt"),
+            expires_at=record.get("expiresAt"),
+            request_type=record.get("requestType"),
+            request_payload=record.get("requestPayload"),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -101,4 +125,6 @@ class ConfirmationStatus:
             "approvedAt": self.approved_at,
             "rejectedAt": self.rejected_at,
             "expiresAt": self.expires_at,
+            "requestType": self.request_type,
+            "requestPayload": self.request_payload,
         }
